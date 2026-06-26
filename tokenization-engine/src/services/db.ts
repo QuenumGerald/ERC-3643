@@ -28,16 +28,24 @@ export class DbService {
       record.block
     ]);
   }
-
   static async getDeploymentByAddress(tokenAddress: string): Promise<any> {
     const query = `SELECT * FROM deployments WHERE token_address = $1`;
     const res = await pool.query(query, [tokenAddress.toLowerCase()]);
-    return res.rows[0] || null;
+    const row = res.rows[0];
+    if (row && typeof row.params === 'string') {
+      row.params = JSON.parse(row.params);
+    }
+    return row || null;
   }
 
   static async getAllDeployments(): Promise<any[]> {
     const query = `SELECT * FROM deployments ORDER BY created_at DESC`;
     const res = await pool.query(query);
-    return res.rows;
+    return res.rows.map(row => {
+      if (row && typeof row.params === 'string') {
+        row.params = JSON.parse(row.params);
+      }
+      return row;
+    });
   }
 }

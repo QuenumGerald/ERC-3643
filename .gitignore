@@ -21,3 +21,9 @@ gas-report
 out/
 cache-forge/
 .env
+
+# SQLite databases
+*.sqlite
+*.sqlite-journal
+*.db
+
