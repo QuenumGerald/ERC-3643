@@ -59,6 +59,8 @@ router.post(
 
       // Deploy token via the blockchain deployer service
       const deployer = new DeployerService();
+      const chainId = await deployer.getChainId();
+
       const deployResult = await deployer.deployToken({
         name: params.name,
         symbol: params.symbol,
@@ -70,7 +72,7 @@ router.post(
 
       // Save to database
       await DbService.saveDeployment({
-        chainId: 1337, // Local Dev Hardhat Chain ID by default
+        chainId,
         tokenAddress: deployResult.tokenAddress,
         identityRegistry: deployResult.identityRegistry,
         complianceAddress: deployResult.complianceAddress,
@@ -84,7 +86,7 @@ router.post(
       const ipfsResult = await IpfsService.saveAndMockUpload({
         tokenAddress: deployResult.tokenAddress,
         abi: deployResult.abi,
-        chainId: 1337,
+        chainId,
       });
 
       return res.status(201).json({

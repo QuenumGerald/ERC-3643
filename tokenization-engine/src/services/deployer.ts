@@ -193,4 +193,9 @@ export class DeployerService {
       abi: TokenArtifact.abi,
     };
   }
+
+  async getChainId(): Promise<number> {
+    const net = await this.provider.getNetwork();
+    return Number(net.chainId);
+  }
 }
