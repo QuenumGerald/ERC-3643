@@ -1,0 +1,43 @@
+name: Deploy Factory to Sepolia
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    name: Deploy TREX Factory to Sepolia
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: 'npm'
+
+      - name: Install Parent Dependencies
+        run: npm ci
+
+      - name: Compile Hardhat Contracts
+        run: npx hardhat compile
+
+      - name: Deploy to Sepolia
+        env:
+          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+          SEPOLIA_PRIVATE_KEY: ${{ secrets.SEPOLIA_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SEPOLIA_PRIVATE_KEY" ]; then
+            echo "::warning::SEPOLIA_PRIVATE_KEY secret is not set. Skipping deployment."
+            exit 0
+          fi
+          if [ -z "$SEPOLIA_RPC_URL" ]; then
+            echo "::warning::SEPOLIA_RPC_URL secret is not set. Skipping deployment."
+            exit 0
+          fi
+          echo "Deploying to Sepolia Testnet..."
+          npx hardhat run scripts/deploy_factory.ts --network sepolia

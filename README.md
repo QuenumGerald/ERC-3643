@@ -1,75 +1,123 @@
-# T-REX : Token for Regulated EXchanges
+# 🧬 ERC-3643 (T-REX) Tokenization Platform
 
-![GitHub](https://img.shields.io/github/license/ERC-3643/ERC-3643?color=green)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/ERC-3643/ERC-3643)
-![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/ERC-3643/ERC-3643/publish-release.yml)
-![GitHub repo size](https://img.shields.io/github/repo-size/ERC-3643/ERC-3643)
-![GitHub Release Date](https://img.shields.io/github/release-date/ERC-3643/ERC-3643)
+An institutional-grade, fully compliant asset tokenization monorepo implementing the ERC-3643 standard. This suite consists of an API deployer, an automatic blockchain event indexer, and an interactive real-time compliance dashboard.
 
+---
 
+## 📽️ Single Slide Pitch (Problem / Solution / Stack)
 
+```
+============================================================================================
+|  Institutional Asset Tokenization Platform (ERC-3643 / T-REX)                           |
+============================================================================================
+| PROBLEM:                                                                                 |
+| - Standard ERC-20 tokens lacks regulatory compliance features (no KYC/AML on-chain limits). |
+| - High friction in verifying decentralized identities in real-time before transactions.  |
+|                                                                                          |
+| SOLUTION:                                                                                |
+| - Permissioned ERC-3643 standard: transfer logic halts if identity claims are invalid.    |
+| - Instant automated REST token deployment, state tracking, and live monitoring.          |
+|                                                                                          |
+| ARCHITECTURE STACK:                                                                      |
+| - Frontend: Next.js 14 (App Router, Tailwind CSS, SWR, Shadcn/ui)                        |
+| - Backend Deployer: Node.js 18, TypeScript, Hardhat, Ethers v6, PostgreSQL               |
+| - Event Indexer: Node.js, Ethers WebSocket Provider, WS Broadcast, PostgreSQL            |
+|                                                                                          |
+| LIVE DEMO PROTOCOL:                                                                      |
+| - Deploy compliant token -> Verify identities -> Mint tokens -> Check live compliance.    |
+============================================================================================
+```
 
-----
+---
 
-<br><br>
+## 🏁 5-Minute Demo Protocol
 
-<p align="center">
-  <a href="https://tokeny.com/erc3643-whitepaper/">
-  <img src="./docs/img/T-REX.png" width="150" title="t-rex">
-  </a>
-</p>
+Follow this simple guide to test the end-to-end flow: from automated deployment to compliance checking and live dashboard updates.
 
+### Step 1: Start the Infrastructure
+Make sure your PostgreSQL database is running, then boot the three services.
 
-## Overview
+1. **Start the REST API Deployer Engine**:
+   ```bash
+   cd tokenization-engine
+   npm install
+   npm run dev
+   ```
+   *(Running on http://localhost:3000)*
 
-The T-REX (Token for Regulated EXchanges) protocol is a comprehensive suite of Solidity smart contracts,
-implementing the [ERC-3643 standard](https://eips.ethereum.org/EIPS/eip-3643) and designed to enable the issuance, management, and transfer of security
-tokens in
-compliance with regulations. It ensures secure and compliant transactions for all parties involved in the token exchange.
+2. **Start the Event Indexer**:
+   ```bash
+   cd indexer
+   npm install
+   npm run dev
+   ```
+   *(Running on port 4000, listening for blockchain transfers)*
 
-## Key Components
+3. **Start the Next.js Dashboard**:
+   ```bash
+   cd tokenization-dashboard
+   npm install
+   npm run dev
+   ```
+   *(Running on http://localhost:3001)*
 
-The T-REX protocol consists of several key components:
+---
 
-- **[ONCHAINID](https://github.com/onchain-id/solidity)**: A smart contract deployed by a user to interact with the security token or any other application
-  where an on-chain identity may be relevant. It stores keys and claims related to a specific identity.
+### Step 2: Deploy a New Compliant Token
+Trigger a token deployment using `curl`. This deploys the token, the identity registry, and the modular compliance contracts:
 
-- **Trusted Issuers Registry**: This contract houses the addresses of all trusted claim issuers associated with a specific token.
+```bash
+curl -X POST http://localhost:3000/deployToken \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <ADMIN_JWT_TOKEN>" \
+  -d '{
+    "name": "Compliant Equity Share",
+    "symbol": "CES",
+    "initialSupplyCap": "10000000",
+    "trustedIssuers": ["0x70997970C51812dc3A010C7d01b50e0d17dc79C8"],
+    "claimTopics": ["0x0000000000000000000000000000000000000000000000000000000000000001"],
+    "complianceFlags": ["US_ONLY", "MAX_LIMIT"]
+  }'
+```
 
-- **Claim Topics Registry**: This contract maintains a list of all trusted claim topics related to the security token.
+The console will return the newly deployed addresses:
+```json
+{
+  "tokenAddress": "0x587C609DFf2E0210cC02E62581CE461e7fAF3D50",
+  "identityRegistry": "0x860C79d993888009083443C0E503aB8B3318E684",
+  "complianceAddress": "0x59260070D2F59f248d17eED806198856a09206eA"
+}
+```
 
-- **Identity Registry**: This contract holds the identity contract addresses of all eligible users authorized to hold the token. It is responsible for claim verification.
+---
 
-- **Compliance Smart Contract**: This contract independently operates to check whether a transfer is in compliance with the established rules for the token.
+### Step 3: Open the Dashboard & Register Investors
+1. Navigate to the **Dashboard** at `http://localhost:3001` and log in.
+2. Go to the **Investors** tab.
+3. Register Alice (`0x70997970C51812dc3A010C7d01b50e0d17dc79C8`) and Bob (`0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC`).
+4. Set Alice's KYC claim check to "Active". Keep Bob's KYC check empty (unverified).
 
-- **Security Token Contract**: This contract interacts with the Identity Registry to check the eligibility status of investors, enabling token holding and transactions.
+---
 
-## Getting Started
+### Step 4: Mint & Test Compliance Refusal
+1. Go to the **Actions** tab on the Dashboard.
+2. Mint **1,000 CES** tokens to Alice. Since Alice's identity is verified, the transaction succeeds.
+3. Attempt to transfer **200 CES** tokens from Alice to Bob:
+   * **Result**: The transaction reverts.
+   * **Dashboard Alert**: A red toast notification instantly pops up in the bottom-right corner: `Transfer Refused: Bob does not possess a valid KYC claim.`
 
-1. Clone the repository: `git clone https://github.com/ERC-3643/ERC-3643.git`
-2. Install dependencies: `npm ci`
-3. Compile the contracts: `hardhat compile`
-4. Run tests: `hardhat test`
+---
 
-## Documentation
+### Step 5: Verify Bob's KYC & Re-attempt Transfer
+1. Navigate back to the **Investors** tab and add the KYC claim to Bob's address.
+2. Re-attempt the transfer of **200 CES** from Alice to Bob.
+   * **Result**: The transaction completes successfully.
+   * **Indexer & Live Feed**: The event is captured by the Indexer, saved to the database, and pushed to the **Transfers** feed on the Dashboard in real time.
 
-For a detailed understanding of the T-REX protocol, please refer to the [whitepaper](./docs/TREX-WhitePaper.pdf).
-All functions of T-REX smart contracts are described in the [T-REX documentation](https://docs.tokeny.com/docs/smart-contracts)
+---
 
-## Contributing
+## 🛠️ Monorepo Projects
 
-We welcome contributions from the community. Please refer to the [CONTRIBUTING](./CONTRIBUTING.md) guide for more details.
-
-## License
-
-This project is licensed under the [GNU General Public License v3.0](./LICENSE.md).
-
-----
-
-<div style="padding: 16px;">
-   <a href="https://tokeny.com/wp-content/uploads/2023/04/Tokeny_TREX-v4_SC_Audit_Report.pdf" target="_blank">
-       <img src="https://hacken.io/wp-content/uploads/2023/02/ColorWBTypeSmartContractAuditBackFilled.png" alt="Proofed by Hacken - Smart contract audit" style="width: 258px; height: 100px;">
-   </a>
-</div>
-
-----
+*   [**`tokenization-engine`**](./tokenization-engine): REST API to deploy the contracts (Hardhat, Ethers v6).
+*   [**`indexer`**](./indexer): Blockchain subscriber that indexes event logs and broadcasts them.
+*   [**`tokenization-dashboard`**](./tokenization-dashboard): Next.js dashboard UI for administrative mint/burn/freeze controls and live transfers stream.

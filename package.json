@@ -72,8 +72,16 @@
     "eth-gas-reporter": "^0.2.27"
   },
   "lint-staged": {
-    "*.js": [
-      "eslint"
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.sol": [
+      "solhint",
+      "prettier --write"
+    ],
+    "*.{js,json,md}": [
+      "prettier --write"
     ]
   }
 }

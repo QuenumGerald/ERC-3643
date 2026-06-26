@@ -1,0 +1,14 @@
+[profile.default]
+src = 'contracts'
+out = 'out'
+libs = ['node_modules', 'lib']
+test = 'test/foundry'
+cache_path = 'cache-forge'
+solc_version = '0.8.17' # Matching the project's Solidity compiler version
+
+remappings = [
+    '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/',
+    '@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/',
+    '@onchain-id/solidity/=node_modules/@onchain-id/solidity/',
+    'forge-std/=lib/forge-std/src/'
+]

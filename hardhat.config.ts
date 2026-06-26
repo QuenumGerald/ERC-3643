@@ -16,6 +16,12 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  networks: {
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL || '',
+      accounts: process.env.SEPOLIA_PRIVATE_KEY ? [process.env.SEPOLIA_PRIVATE_KEY] : [],
+    },
+  },
   gasReporter: {
     enabled: true,
   },
