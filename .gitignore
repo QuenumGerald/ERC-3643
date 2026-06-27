@@ -3,6 +3,7 @@ node_modules/
 # Artifacts
 build/
 bin/
+dist/
 coverage/
 coverage.json
 typechain-types/
