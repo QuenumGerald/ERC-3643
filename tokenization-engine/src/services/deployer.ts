@@ -193,4 +193,60 @@ export class DeployerService {
       abi: TokenArtifact.abi,
     };
   }
+
+  /**
+   * Mints tokens to an address.
+   */
+  async mint(tokenAddress: string, to: string, amount: string): Promise<TransactionReceipt> {
+    const token = new ethers.Contract(tokenAddress, TokenArtifact.abi, this.wallet);
+    console.log(`[Deployer] Minting ${amount} tokens to ${to} on contract ${tokenAddress}`);
+    
+    const amountBI = ethers.parseUnits(amount, 18);
+
+    return this.executeTxWithRetry(async (nonce, gasOpts) => {
+      const estimatedGas = await token.mint.estimateGas(to, amountBI, gasOpts);
+      const txOpts = {
+        ...gasOpts,
+        gasLimit: (estimatedGas * 120n) / 100n
+      };
+      return token.mint(to, amountBI, txOpts);
+    });
+  }
+
+  /**
+   * Burns tokens from an address.
+   */
+  async burn(tokenAddress: string, from: string, amount: string): Promise<TransactionReceipt> {
+    const token = new ethers.Contract(tokenAddress, TokenArtifact.abi, this.wallet);
+    console.log(`[Deployer] Burning ${amount} tokens from ${from} on contract ${tokenAddress}`);
+
+    const amountBI = ethers.parseUnits(amount, 18);
+
+    return this.executeTxWithRetry(async (nonce, gasOpts) => {
+      const estimatedGas = await token.burn.estimateGas(from, amountBI, gasOpts);
+      const txOpts = {
+        ...gasOpts,
+        gasLimit: (estimatedGas * 120n) / 100n
+      };
+      return token.burn(from, amountBI, txOpts);
+    });
+  }
+
+  /**
+   * Freezes or unfreezes an address.
+   */
+  async setAddressFrozen(tokenAddress: string, investorAddress: string, freeze: boolean): Promise<TransactionReceipt> {
+    const token = new ethers.Contract(tokenAddress, TokenArtifact.abi, this.wallet);
+    console.log(`[Deployer] Setting freeze status to ${freeze} for ${investorAddress} on contract ${tokenAddress}`);
+
+    return this.executeTxWithRetry(async (nonce, gasOpts) => {
+      const estimatedGas = await token.setAddressFrozen.estimateGas(investorAddress, freeze, gasOpts);
+      const txOpts = {
+        ...gasOpts,
+        gasLimit: (estimatedGas * 120n) / 100n
+      };
+      return token.setAddressFrozen(investorAddress, freeze, txOpts);
+    });
+  }
 }
+

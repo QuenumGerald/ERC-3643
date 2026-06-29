@@ -113,4 +113,129 @@ router.post(
   }
 );
 
+// Zod schemas for operational routes
+const mintSchema = z.object({
+  tokenAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, { message: 'Invalid token address' }),
+  to: z.string().regex(/^0x[a-fA-F0-9]{40}$/, { message: 'Invalid recipient address' }),
+  amount: z.string().min(1, 'Amount is required')
+});
+
+const burnSchema = z.object({
+  tokenAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, { message: 'Invalid token address' }),
+  from: z.string().regex(/^0x[a-fA-F0-9]{40}$/, { message: 'Invalid sender address' }),
+  amount: z.string().min(1, 'Amount is required')
+});
+
+const freezeSchema = z.object({
+  tokenAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, { message: 'Invalid token address' }),
+  investorAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, { message: 'Invalid investor address' }),
+  freeze: z.boolean()
+});
+
+// GET all deployments
+router.get(
+  '/deployments',
+  authMiddleware(['ADMIN', 'ISSUER']),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const deployments = await DbService.getAllDeployments();
+      return res.json({ success: true, data: deployments });
+    } catch (error: any) {
+      console.error('Error fetching deployments:', error);
+      return res.status(500).json({ error: 'Failed to fetch deployments', message: error.message || error });
+    }
+  }
+);
+
+// POST mint tokens
+router.post(
+  '/mint',
+  authMiddleware(['ADMIN', 'ISSUER']),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const parsedBody = mintSchema.safeParse(req.body);
+      if (!parsedBody.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsedBody.error.errors });
+      }
+      const { tokenAddress, to, amount } = parsedBody.data;
+
+      const deployer = new DeployerService();
+      const receipt = await deployer.mint(tokenAddress, to, amount);
+
+      return res.json({
+        success: true,
+        message: 'Tokens minted successfully',
+        data: {
+          txHash: receipt.hash,
+          blockNumber: receipt.blockNumber
+        }
+      });
+    } catch (error: any) {
+      console.error('Error minting tokens:', error);
+      return res.status(500).json({ error: 'Failed to mint tokens', message: error.message || error });
+    }
+  }
+);
+
+// POST burn tokens
+router.post(
+  '/burn',
+  authMiddleware(['ADMIN', 'ISSUER']),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const parsedBody = burnSchema.safeParse(req.body);
+      if (!parsedBody.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsedBody.error.errors });
+      }
+      const { tokenAddress, from, amount } = parsedBody.data;
+
+      const deployer = new DeployerService();
+      const receipt = await deployer.burn(tokenAddress, from, amount);
+
+      return res.json({
+        success: true,
+        message: 'Tokens burned successfully',
+        data: {
+          txHash: receipt.hash,
+          blockNumber: receipt.blockNumber
+        }
+      });
+    } catch (error: any) {
+      console.error('Error burning tokens:', error);
+      return res.status(500).json({ error: 'Failed to burn tokens', message: error.message || error });
+    }
+  }
+);
+
+// POST freeze wallet
+router.post(
+  '/freeze',
+  authMiddleware(['ADMIN', 'ISSUER']),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const parsedBody = freezeSchema.safeParse(req.body);
+      if (!parsedBody.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsedBody.error.errors });
+      }
+      const { tokenAddress, investorAddress, freeze } = parsedBody.data;
+
+      const deployer = new DeployerService();
+      const receipt = await deployer.setAddressFrozen(tokenAddress, investorAddress, freeze);
+
+      return res.json({
+        success: true,
+        message: `Wallet ${freeze ? 'frozen' : 'unfrozen'} successfully`,
+        data: {
+          txHash: receipt.hash,
+          blockNumber: receipt.blockNumber
+        }
+      });
+    } catch (error: any) {
+      console.error('Error modifying wallet freeze status:', error);
+      return res.status(500).json({ error: 'Failed to modify wallet status', message: error.message || error });
+    }
+  }
+);
+
 export default router;
+
